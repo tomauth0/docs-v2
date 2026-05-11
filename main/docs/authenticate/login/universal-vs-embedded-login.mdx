@@ -1,24 +1,20 @@
 ---
-description: Describes the differences between hosted login (Universal Login)
-  and embedded login.
-'og:image': https://cdn2.auth0.com/docs/1.14553.0/img/share-image.png
-'og:title': Hosted Login vs. Embedded Login
-'og:url': https://auth0.com/docs/
+description: Compare Universal Login and Embedded Login to choose the right authentication approach for your application.
+‘og:image’: https://cdn2.auth0.com/docs/1.14553.0/img/share-image.png
+‘og:title’: Universal Login vs. Embedded Login
+‘og:url’: https://auth0.com/docs/
 permalink: universal-vs-embedded-login
-title: Hosted Login vs. Embedded Login
-'twitter:description': Describes the differences between hosted login (Universal Login)
-  and embedded login.
-'twitter:title': Hosted Login vs. Embedded Login
+title: Universal Login vs. Embedded Login
+‘twitter:description’: Compare Universal Login and Embedded Login to choose the right authentication approach for your application.
+‘twitter:title’: Universal Login vs. Embedded Login
 ---
-When you design the login experience for your application, you’ll need to decide if you want it to be hosted ([Universal Login](/docs/authenticate/login/auth0-universal-login)) or embedded.
+Auth0 supports two fully supported, production-ready approaches to authentication: Universal Login (hosted by Auth0) and Embedded Login (hosted by you). The right choice depends on your application’s specific requirements for user experience, customization, and implementation effort.
 
-## Hosted login
+## Universal Login
 
 In a hosted login flow, the application redirects the user to the <Tooltip tip="Authorization Server: Centralized server that contributes to defining the boundaries of a user’s access. For example, your authorization server can control the data, tasks, and features available to a user." cta="View Glossary" href="/docs/glossary?term=authorization+server">authorization server</Tooltip> to perform authentication, and then the authorization server returns the user to the application.
 
-### Universal Login flow
-
-In the typical user authentication experience with <Tooltip tip="Universal Login: Your application redirects to Universal Login, hosted on Auth0's Authorization Server, to verify a user's identity." cta="View Glossary" href="/docs/glossary?term=Universal+Login">Universal Login</Tooltip>:
+### How it works
 
 1. Your application triggers an authentication request by invoking an Auth0 SDK’s login method or by calling the [Auth0 Authentication API Login endpoint](https://auth0.com/docs/api/authentication/login/) directly.
 2. Your application redirects the user to the Auth0 authorization server (your Auth0 tenant).
@@ -28,55 +24,73 @@ In the typical user authentication experience with <Tooltip tip="Universal Login
    * If a session cookie is found, Auth0 uses it to authenticate the user.
 4. Auth0 returns the user to your application with an [ID token](/docs/secure/tokens/id-tokens) and an [access token](/docs/secure/tokens/access-tokens).
 
-## Embedded login
+### When to use Universal Login
 
-In an embedded login flow, the user authenticates directly within your application. The application serves the login form, collects the user’s credentials, sends that data to the authentication provider, and then receives a response with the user’s <Tooltip tip="ID Token: Credential meant for the client itself, rather than for accessing a resource." cta="View Glossary" href="/docs/glossary?term=ID+token">ID token</Tooltip> and <Tooltip tip="ID Token: Credential meant for the client itself, rather than for accessing a resource." cta="View Glossary" href="/docs/glossary?term=access+token">access token</Tooltip>.
+* You want Auth0 to manage security updates and new features automatically
+* You need SSO across applications on different domains or with third-party applications
+* You prefer centralized configuration through the Auth0 Dashboard
 
-For web applications, embedded login uses [cross-origin authentication](/docs/authenticate/login/cross-origin-authentication) unless you [configure a custom domain](/docs/customize/custom-domains) for your Auth0 tenant. Cross-origin authentication uses third-party cookies to allow for secure authentication transactions across different origins.
+## Embedded Login
 
-## Feature comparison
+In an embedded login flow, the user authenticates directly within your application. Your application serves the login form, collects the user’s credentials, sends that data to Auth0, and receives back the user’s <Tooltip tip="ID Token: Credential meant for the client itself, rather than for accessing a resource." cta="View Glossary" href="/docs/glossary?term=ID+token">ID token</Tooltip> and <Tooltip tip="ID Token: Credential meant for the client itself, rather than for accessing a resource." cta="View Glossary" href="/docs/glossary?term=access+token">access token</Tooltip>. All authentication logic and security handling are managed by Auth0 SDKs and APIs; you control only the UI presentation and flow.
+
+For web applications, use a [custom domain](/docs/customize/custom-domains) to keep authentication on the same top-level domain as your application for the best user experience and session handling.
+
+### When to use Embedded Login
+
+* You need complete control over the login UI to match your application’s exact design system
+* You want users to remain in your application throughout authentication without redirects
+* You are building a native mobile app and want to avoid browser redirects
+* You need custom authentication flows such as progressive profiling, step-up authentication, or multi-step challenges
+* You are integrating authentication into non-traditional interfaces (AI agents, chatbots, checkout flows)
+
+## Comparison
 
 <table class="table"><thead>
 <tr>
-<th><strong>Feature</strong></th>
-<th><strong>Hosted</strong></th>
-<th><strong>Embedded</strong></th>
+<th><strong>Aspect</strong></th>
+<th><strong>Universal Login</strong></th>
+<th><strong>Embedded Login</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong><a href="/docs/authenticate/single-sign-on">Single Sign-on</a></strong></td>
-<td>Full support with Universal Login through the use of <a href="/docs/manage-users/sessions">session cookies</a> on the Auth0 Authorization Server (your Auth0 tenant).</td>
-<td>Limited support. Web applications that use the <a href="/docs/libraries/lock/lock-api-reference#checksession-">Lock</a> or <a href="/docs/libraries/auth0js#using-checksession-to-acquire-new-tokens">Auth0.js</a> libraries can share sessions. Native applications can share sessions with web applications through <a href="/docs/authenticate/single-sign-on/native-to-web">Native to Web SSO</a>.</td>
+<td>Built-in across all applications and domains through <a href="/docs/manage-users/sessions">session cookies</a> on the Auth0 Authorization Server.</td>
+<td>Supported across first-party applications with a <a href="/docs/customize/custom-domains">custom domain</a>. Use <a href="/docs/libraries/lock/lock-api-reference#checksession-">Lock</a> or <a href="/docs/libraries/auth0js#using-checksession-to-acquire-new-tokens">Auth0.js</a> for web apps, or <a href="/docs/authenticate/single-sign-on/native-to-web">Native to Web SSO</a> for native apps.</td>
 </tr>
 <tr>
 <td><strong><a href="/docs/customize">Customization</a></strong></td>
-<td>Universal Login allows you to easily customize many parts of the experience (including theming, page templates, text elements, and prompts). <br/><br/>Full customization is supported through <a href="/docs/customize/login-pages/advanced-customizations">Advanced Customizations for Universal Login.</a></td>
-<td>Highest degree of customization, since you fully control the UI/UX of your application.</td>
+<td>Configurable through Dashboard (theming, templates, text) and <a href="/docs/customize/login-pages/advanced-customizations">Advanced Customizations</a> for deeper control.</td>
+<td>Complete control over UI/UX. Build any login experience using your own components and design system.</td>
 </tr>
 <tr>
-<td><strong>Feature management</strong></td>
-<td>Features can be centrally managed within the Auth0 Dashboard or through the Auth0 Management API.<br/><br/>For example, when you enable/disable MFA in your Dashboard, it will be immediately reflected in subsequent user logins.</td>
-<td>Features must be managed for each application individually.<br/><br/>For example, if you wanted to implement MFA for your web application and for your native application, you’d have to update and release new versions for both.</td>
+<td><strong>Feature updates</strong></td>
+<td>Managed centrally by Auth0. All changes apply immediately across all applications.</td>
+<td>Managed by you in your application code. You control when and how to adopt new features.</td>
 </tr>
 <tr>
 <td><strong>User experience</strong></td>
-<td>Users are redirected between your application and the Auth0 Authorization Server during authentication.<br/><br/>For native applications, this requires implementation of universal/deep links.</td>
-<td>Users remain in your application during authentication.</td>
+<td>Users are briefly redirected to Auth0 Authorization Server during authentication. Native apps require universal/deep links to return.</td>
+<td>Users remain in your application throughout authentication. No redirects or context switching.</td>
 </tr>
 <tr>
-<td><strong>Security and maintenance</strong></td>
-<td>Auth0 monitors security trends and updates Universal Login accordingly.</td>
-<td>You are responsible for following security best practices and implementing provided technologies accordingly.</td>
+<td><strong>Implementation effort</strong></td>
+<td>Lower effort. SDK handles redirects and callback logic; less code to write.</td>
+<td>Higher effort. You build and maintain the login UI and orchestrate the authentication flow.</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Auth0 manages all security updates and threat mitigations automatically.</td>
+<td>Auth0 SDKs and APIs handle all protocol-level security. You are responsible for UI-layer security best practices (e.g., secure credential handling, injection prevention).</td>
 </tr>
 </tbody>
 </table>
 
-## Best practice
-
-According to [RFC 8252: OAuth 2.0 for Native Apps on IETF](https://www.rfc-editor.org/rfc/rfc8252.txt), only external user-agents (such as the browser) should be used by native applications for authentication flows.
-
 ## Learn more
 
+* [Embedded Login](/docs/authenticate/login/embedded-login)
+* [Auth0 Universal Login](/docs/authenticate/login/auth0-universal-login)
+* [Cross-Origin Authentication](/docs/authenticate/login/cross-origin-authentication)
+* [Custom Domains](/docs/customize/custom-domains)
 * [Prevent Common Cybersecurity Threats](/docs/secure/security-guidance/prevent-threats)
-* [Troubleshoot Custom Domains](/docs/troubleshoot/integration-extensibility-issues/troubleshoot-custom-domains)

@@ -39,15 +39,9 @@ Examples of native apps with embedded login:
 
 ### Considerations
 
-* Phishing/security concerns: an unauthorized party could decompile or intercept traffic to/from your application to get the <Tooltip tip="Client ID: Identification value given to your registered resource from Auth0." cta="View Glossary" href="/docs/glossary?term=Client+ID">Client ID</Tooltip> and authentication URL. With this information the unauthorized party could create a rogue application, upload it to an application store, and use it to phish for usernames, passwords, and <Tooltip tip="Access Token: Authorization credential, in the form of an opaque string or JWT, used to access an API." cta="View Glossary" href="/docs/glossary?term=Access+Tokens">Access Tokens</Tooltip>.
-* <Tooltip tip="Single Sign-On (SSO): Service that, after a user logs into one applicaton, automatically logs that user in to other applications." cta="View Glossary" href="/docs/glossary?term=SSO">SSO</Tooltip>: users have to enter their credentials for each application.
-
-  + Can implement SSO with native apps by storing refresh tokens on a shared keychain, but this is not compliant with the OAuth 2.0 specifications.
-* Takes more time to implement
-* No automatic improvements when Auth0 adds new features, have to update app code to take advantage of new features vs UL
-* Not compliant with <Tooltip tip="OAuth 2.0: Authorization framework that defines authorization protocols and workflows." cta="View Glossary" href="/docs/glossary?term=OAuth+2.0">OAuth 2.0</Tooltip> best practices
-
-  + [RFC 8252 OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252): authorization requests from native apps should only be made through external user-agents, primarily the user's browser
+* <Tooltip tip="Single Sign-On (SSO): Service that, after a user logs into one applicaton, automatically logs that user in to other applications." cta="View Glossary" href="/docs/glossary?term=SSO">SSO</Tooltip>: users have to enter their credentials for each application unless you implement SSO with native apps by storing refresh tokens on a shared keychain.
+* You are responsible for updating app code to take advantage of new Auth0 features.
+* Ensure you follow security best practices to protect your <Tooltip tip="Client ID: Identification value given to your registered resource from Auth0." cta="View Glossary" href="/docs/glossary?term=Client+ID">Client ID</Tooltip> and authentication URLs from unauthorized access.
 
 ## Native social login
 

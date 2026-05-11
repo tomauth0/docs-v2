@@ -14,12 +14,6 @@ import {AuthCodeBlock} from "/snippets/AuthCodeBlock.jsx";
 
 Lock is an embeddable login form that can be [configured to your needs](/docs/libraries/lock/lock-configuration). Lock enables you to easily add social <Tooltip tip="Identity Provider (IdP): Service that stores and manages digital identities." cta="View Glossary" href="/docs/glossary?term=identity+providers">identity providers</Tooltip>, so that your users can log in seamlessly using any desired provider.
 
-<Warning>
-
-Embedded login for web applications uses [cross-origin authentication](/docs/authenticate/login/cross-origin-authentication) unless you [configure a custom domain](/docs/customize/custom-domains) for your tenant. Cross-origin authentication uses third-party cookies to allow for secure authentication transactions across different origins.
-
-</Warning>
-
 ## Lock Installation
 
 You can install Lock via several methods. Select any of the following installation sources that best suit your environment and application.
@@ -52,13 +46,7 @@ If you are using browserify or webpack to build your project and bundle its depe
 
 ### Cross-Origin Authentication
 
-<Warning>
-
-Embedded login for web applications uses [cross-origin authentication](/docs/authenticate/login/cross-origin-authentication) unless you [configure a custom domain](/docs/customize/custom-domains) for your tenant. Cross-origin authentication uses third-party cookies to allow for secure authentication transactions across different origins.
-
-</Warning>
-
-Embedding Lock within your application requires [cross-origin authentication](/docs/authenticate/login/cross-origin-authentication) to be properly configured. Specifically, you need to set the **Allowed Web Origins** property to the domain making the request. You can find this field in the [Application Settings](https://manage.auth0.com/#/applications/{yourClientId}/settings).
+Embedding Lock within your application requires [cross-origin authentication](/docs/authenticate/login/cross-origin-authentication) to be properly configured unless you [configure a custom domain](/docs/customize/custom-domains) for your tenant. Specifically, you need to set the **Allowed Web Origins** property to the domain making the request. You can find this field in the [Application Settings](https://manage.auth0.com/#/applications/{yourClientId}/settings).
 
 ## Usage
 
@@ -214,7 +202,7 @@ Apps with embedded login must meet two criteria in order to have <Tooltip tip="S
 1. Both of the applications attempting SSO must be first-party applications. SSO with third-party applications will not work.
 2. They need to make use of custom domains and have both the applications which intend to have SSO as well as the Auth0 tenant on the same domain. Traditionally, Auth0 domains are in the format `foo.auth0.com`, but custom domains allow you to use the same domain for each of the applications in question as well as your Auth0 tenant, preventing the risk of CSRF attacks.
 
-Our recommendation is to use <Tooltip tip="Universal Login: Your application redirects to Universal Login, hosted on Auth0's Authorization Server, to verify a user's identity." cta="View Glossary" href="/docs/glossary?term=Universal+Login">Universal Login</Tooltip> instead of setting up SSO in embedded login scenarios. Universal Login is the most reliable and stable way to perform SSO, and is the only way to do so if you must use multiple domains for your applications, or use [third-party applications](/docs/get-started/applications/confidential-and-public-applications/enable-third-party-applications).
+If you must use multiple domains for your applications, or use [third-party applications](/docs/get-started/applications/confidential-and-public-applications/enable-third-party-applications), you will need to use <Tooltip tip="Universal Login: Your application redirects to Universal Login, hosted on Auth0's Authorization Server, to verify a user's identity." cta="View Glossary" href="/docs/glossary?term=Universal+Login">Universal Login</Tooltip> for SSO instead.
 
 ## Error Codes and Descriptions
 
