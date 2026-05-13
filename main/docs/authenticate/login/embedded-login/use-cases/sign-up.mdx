@@ -1,0 +1,165 @@
+---
+title: "Embedded Sign-up"
+description: "Create new user accounts with custom onboarding flows and progressive profiling."
+---
+
+## What is embedded sign-up?
+
+Embedded sign-up allows you to handle user registration directly within your application. Rather than using a generic sign-up form, you can collect exactly the information you need, when you need it—using progressive profiling, conditional logic, custom validation, and post-signup enrichment.
+
+This approach enables sophisticated onboarding experiences that adapt to user type, verify information in real-time, and capture profile data incrementally instead of all at once.
+
+## When to choose embedded sign-up
+
+Choose embedded sign-up when:
+
+- **Progressive profiling**: You want to collect profile information incrementally across multiple interactions rather than all in one form.
+- **Conditional flows**: Different user types (individual vs. enterprise, buyer vs. seller) need different sign-up paths.
+- **Custom validation**: You need real-time validation, business logic checks, or integration with external systems during registration.
+- **User metadata**: You want to collect custom fields, preferences, or application-specific data during sign-up.
+- **Post-signup enrichment**: You need to trigger workflows (verification, welcome emails, data enrichment) immediately after registration.
+- **Multi-step onboarding**: You're routing users through wizard-like experiences with branching logic.
+
+## Real-world scenarios
+
+**SaaS platforms with user types**: Apps like marketplaces or team collaboration tools ask different signup questions based on user role. Individual users might answer "What industry are you in?" while enterprise users answer "What's your company size?"
+
+**Mobile apps with progressive onboarding**: A fitness app might collect just email/password on signup, then ask for fitness goals after the user opens the app, and profile photo when they first create a workout.
+
+**Marketplace seller setup**: Platforms like Etsy or Shopify route buyers and sellers to different onboarding flows, collecting different information for each role.
+
+**Financial verification during signup**: A banking app might verify phone number, collect tax ID, and confirm identity as part of the signup flow rather than after.
+
+**Subscription platforms**: SaaS products can collect sign-up data, verify email, and optionally route users to a payment page—all within your embedded flow.
+
+## How embedded sign-up works
+
+<Steps>
+<Step title="User initiates sign-up">
+Your app displays a sign-up form within your native UI. You control the fields and layout.
+</Step>
+
+<Step title="App collects user data">
+Gather email, password, custom fields, and any user metadata your business requires.
+</Step>
+
+<Step title="App calls signup endpoint">
+Your backend sends the user data to Auth0's Authentication API signup endpoint.
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/dbconnections/signup' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "email": "user@example.com",
+    "password": "SecurePassword123!",
+    "connection": "YOUR_DATABASE_CONNECTION",
+    "user_metadata": {
+      "industry": "Technology",
+      "company_size": "50-200",
+      "preferences": {"newsletter": true}
+    }
+  }'
+```
+</Step>
+
+<Step title="Auth0 creates user and triggers actions">
+Auth0 creates the user account, validates the email (if configured), and executes post-signup Actions for enrichment or verification.
+</Step>
+
+<Step title="App authenticates or redirects to login">
+After signup, you can optionally authenticate the user immediately using their credentials, or redirect them to verify their email before login.
+
+```bash
+# Optional: authenticate immediately after signup
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "audience": "YOUR_API_IDENTIFIER",
+    "grant_type": "http://auth0.com/oauth/grant-type/passwordless-otp",
+    "username": "user@example.com",
+    "password": "SecurePassword123!"
+  }'
+```
+</Step>
+
+<Step title="Your app continues onboarding">
+Depending on your flow, progressively collect additional profile information, payment details, or preferences as the user interacts with your app.
+</Step>
+</Steps>
+
+## Collecting custom data during sign-up
+
+### User metadata
+
+Use `user_metadata` to store application-specific data that doesn't fit Auth0's standard user profile:
+
+```bash
+{
+  "user_metadata": {
+    "industry": "Finance",
+    "company_size": "Enterprise",
+    "preferred_language": "es",
+    "marketing_preferences": {
+      "email_news": true,
+      "sms_offers": false
+    }
+  }
+}
+```
+
+See [User Metadata](/docs/manage-users/metadata) for details on storing and retrieving custom user data.
+
+### Database connections
+
+Embedded sign-up works with Auth0's database connections, which store user credentials securely with proper password hashing:
+
+- [Database Connections](/docs/authenticate/database-connections) — Overview and configuration
+- [Custom Password Hashing](/docs/authenticate/database-connections/custom-password-hashing) — Integrate with legacy password systems
+
+## Post-signup workflows with Actions
+
+After a user signs up, you can trigger automated workflows using Auth0 Actions:
+
+- **Send verification emails**: Automatically email new users to verify their account.
+- **Enrich user profile**: Call external APIs to add firmographic data, credit checks, or fraud scoring.
+- **Trigger welcome sequences**: Enroll users in email campaigns or onboarding flows.
+- **Set default roles or permissions**: Automatically assign users to starter roles based on signup data.
+
+See [Actions](/docs/customize/actions) for documentation on post-login and post-signup events.
+
+## Passwordless sign-up
+
+For applications that want to skip passwords entirely, use passwordless sign-up with email or SMS verification:
+
+- [Embedded Passwordless Sign-up](/docs/authenticate/passwordless/implement-login/embedded-login) — Email verification during registration
+
+## Building custom sign-up UI
+
+Auth0 provides SDKs and APIs for custom implementations:
+
+- [Auth0.js signup method](/docs/libraries/auth0js) — JavaScript SDK for web
+- [Auth0-Swift](/docs/libraries/auth0-swift) — Native iOS
+- [Auth0-Android](/docs/libraries/auth0-android) — Native Android
+- [Auth0 React Native](/docs/libraries/react-native) — React Native implementation
+
+## Best practices
+
+**Collect information progressively**: Don't ask for 20 fields at signup. Ask for the minimum on day one, then collect additional information as users interact with your app.
+
+**Validate in real-time**: Use Auth0 Actions or your own backend to validate email uniqueness, check password strength, or verify external data (e.g., company domain for enterprise users).
+
+**Provide clear error messages**: If signup fails (duplicate email, weak password, validation error), return clear, actionable error messages to the user.
+
+**Secure password handling**: Never log or store passwords except through Auth0's secure channels. Always use HTTPS.
+
+**Test signup flows**: Regularly test your embedded signup with various user types and edge cases (duplicate emails, special characters, very long inputs).
+
+## Next steps
+
+- [Embedded Sign-up](/docs/authenticate/passwordless/implement-login/embedded-login) — Passwordless sign-up flows
+- [User Management API](/docs/api/management/v2/#!/Users/post_users) — Create users programmatically
+- [Database Connections](/docs/authenticate/database-connections) — Configure database connection for sign-up
+- [Actions](/docs/customize/actions) — Automate post-signup workflows

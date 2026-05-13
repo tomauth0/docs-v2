@@ -1,0 +1,125 @@
+---
+title: "Embedded Login"
+description: "Authenticate existing users directly in your application without redirects using embedded login flows."
+---
+
+## What is embedded login?
+
+Embedded Login allows you to authenticate existing users directly within your application interface without redirecting to an external login page. You collect user credentials (or credentials are collected via passkey, email OTP, or SMS OTP), send them directly to Auth0's authentication API, and receive tokens in return — all without leaving your app.
+
+This approach is ideal when you need complete control over the authentication experience, want seamless in-app flows, or must comply with policies that restrict external redirects.
+
+## When to choose embedded login
+
+Choose embedded login when:
+
+- **UX demands it**: Your product requires a native or fully custom login experience that cannot be achieved with redirects.
+- **No-redirect requirement**: You need to authenticate users mid-conversation (AI agents), during checkout, or in other contexts where redirecting would break user flow.
+- **Native mobile apps**: You're building iOS or Android apps and want passkey enrollment, OTP entry, or other native experiences.
+- **Restricted network policies**: Your users' networks or organizations prevent redirects to external login pages.
+- **Custom validation or profiling**: You need to collect additional data or validate custom business logic before or after authentication.
+
+Consider [Universal Login](/docs/authenticate/login/auth0-universal-login) instead if you prefer faster time-to-market, automatic security updates, and Auth0-hosted UI maintenance.
+
+## Real-world scenarios
+
+**Banking apps**: Mobile banking apps must maintain a branded, seamless login experience within the app. Embedded login enables this while maintaining security via DPoP token binding and biometric factors.
+
+**Enterprise SaaS**: Corporate applications may have policies restricting redirects. Embedded login keeps the entire experience within the app environment.
+
+**Conversational AI agents**: AI agents can authenticate users mid-conversation without breaking context. Users provide credentials or complete MFA challenges directly in the chat interface.
+
+**E-commerce checkout**: Online stores can inline a login flow during checkout, letting users authenticate without leaving the purchase funnel.
+
+**Kiosk applications**: Self-service kiosks can embed login directly in their custom interface for efficient user authentication.
+
+## How embedded login works
+
+<Steps>
+<Step title="User initiates login">
+Your app displays a login form or passkey selector within your native UI.
+</Step>
+
+<Step title="App collects credentials">
+Gather the user's credentials (username/password, email/OTP, SMS code, or passkey assertion) directly in your app.
+</Step>
+
+<Step title="App calls /oauth/token">
+Your backend or frontend sends the credentials to Auth0's `/oauth/token` endpoint with the appropriate grant type.
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "audience": "YOUR_API_IDENTIFIER",
+    "grant_type": "http://auth0.com/oauth/grant-type/passwordless-otp",
+    "username": "user@example.com",
+    "otp": "123456"
+  }'
+```
+</Step>
+
+<Step title="Auth0 validates and returns tokens">
+Auth0 verifies the credentials, checks MFA requirements, and returns access tokens, ID tokens, and refresh tokens.
+</Step>
+
+<Step title="App uses tokens">
+Your app stores the tokens and uses the access token to call your API resources on behalf of the user.
+</Step>
+</Steps>
+
+## Supported authentication methods
+
+Embedded login can be powered by several authentication methods:
+
+### Resource Owner Password Grant (ROPG)
+
+For applications with database connections or social IdP logins where you collect and submit credentials directly:
+
+- [Resource Owner Password Flow](/docs/get-started/authentication-and-authorization-flow/resource-owner-password-flow) — detailed flow documentation
+- [Call Your API Using ROPG](/docs/get-started/authentication-and-authorization-flow/resource-owner-password-flow/call-your-api-using-resource-owner-password-flow) — implementation guide
+
+### Passwordless (Email/SMS OTP)
+
+For login flows using one-time passwords:
+
+- [Embedded Passwordless Login](/docs/authenticate/passwordless/implement-login/embedded-login) — email and SMS OTP flows
+- [Auth0.js signup and login methods](/docs/libraries/auth0js) — JavaScript SDK for web apps
+
+### Native Passkeys
+
+For iOS and Android apps, you can use platform-native passkey APIs for frictionless, phishing-resistant authentication:
+
+- [Native Passkey Enrollment](/docs/authenticate/passwordless/implement-login/embedded-login/native-passkeys) — on-device passkey setup for iOS/Android
+
+### Lock SDK & Auth0.js
+
+Pre-built UI components that embed login directly in your web app:
+
+- [Lock for Web](/docs/libraries/lock) — customizable login widget
+- [Auth0.js](/docs/libraries/auth0js) — minimal JavaScript SDK for custom UI
+
+## Important security considerations
+
+### First-party SSO with custom domain
+
+If you want users logging into your embedded flow to share SSO sessions with your other applications, you must use a [custom domain](/docs/customize/custom-domains). This enables first-party cookie behavior and seamless SSO across your apps.
+
+Without a custom domain, SSO will not work because requests to Auth0's default domain (`*.auth0.com`) are treated as third-party.
+
+### DPoP token binding (Native apps)
+
+For native mobile and desktop applications, consider implementing [Demonstrating Proof of Possession (DPoP)](/docs/secure/tokens/access-tokens/token-binding/demonstrate-proof-of-possession) to bind tokens to the device and prevent token theft.
+
+### Session management with refresh tokens
+
+Use refresh tokens as lightweight session artifacts to avoid full re-authentication during step-up flows or when tokens expire. See [Refresh Tokens](/docs/secure/tokens/refresh-tokens) for details.
+
+## Next steps
+
+- [Step-up Authentication](/docs/authenticate/login/embedded-login/use-cases/step-up) — Add MFA challenges before sensitive operations
+- [MFA Enrollment](/docs/authenticate/login/embedded-login/use-cases/mfa-enrollment) — Let users enroll in additional authentication factors
+- [Embedded Login Overview](/docs/authenticate/login/embedded-login) — Full feature reference
+- [MFA for Embedded Flows](/docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa) — Implement MFA in your embedded flows

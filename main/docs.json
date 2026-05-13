@@ -551,7 +551,22 @@
                             ]
                           },
                           "docs/authenticate/login/universal-vs-embedded-login",
-                          "docs/authenticate/login/embedded-login",
+                          {
+                            "group": "Embedded Login",
+                            "pages": [
+                              "docs/authenticate/login/embedded-login",
+                              {
+                                "group": "Use Cases",
+                                "pages": [
+                                  "docs/authenticate/login/embedded-login/use-cases",
+                                  "docs/authenticate/login/embedded-login/use-cases/login",
+                                  "docs/authenticate/login/embedded-login/use-cases/sign-up",
+                                  "docs/authenticate/login/embedded-login/use-cases/step-up",
+                                  "docs/authenticate/login/embedded-login/use-cases/mfa-enrollment"
+                                ]
+                              }
+                            ]
+                          },
                           "docs/authenticate/login/native-login",
                           "docs/authenticate/login/cross-origin-authentication",
                           "docs/authenticate/login/configure-silent-authentication",
@@ -1858,7 +1873,7 @@
                             ]
                           },
                           {
-                            "group": "Authenticate Using ROPG Flow with MFA",
+                            "group": "MFA for Embedded Flows",
                             "pages": [
                               "docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa",
                               "docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa/enroll-challenge-sms-voice-authenticators",

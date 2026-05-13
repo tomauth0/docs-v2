@@ -1,0 +1,189 @@
+---
+title: "Embedded MFA Enrollment"
+description: "Let users add and manage authentication factors directly in your application."
+---
+
+## What is embedded MFA enrollment?
+
+Embedded MFA enrollment allows users to add second factors (authenticators, SMS, email, push notifications, biometric) directly within your application without leaving your flow. Users can enroll in new factors during onboarding, from a settings page, or when required by security policies.
+
+This keeps users in your app throughout the entire factor setup process, resulting in better completion rates and a seamless experience.
+
+## When to use embedded MFA enrollment
+
+Use embedded MFA enrollment when:
+
+- **Onboarding requirement**: Your app requires users to set up at least one additional factor during signup.
+- **Settings management**: You want to let users manage their enrolled factors from an in-app settings page.
+- **Progressive security**: You enforce security progressively—some features available after password login, premium features after MFA enrollment.
+- **Security-first products**: Your app targets security-conscious users (banks, financial platforms, health apps) where MFA is expected.
+- **Native passkey enrollment**: You're building iOS or Android apps and want platform-native passkey setup.
+- **Compliance requirements**: Your organization requires MFA for all users or for access to certain data.
+
+## Real-world scenarios
+
+**Mobile banking apps**: During initial login, users are prompted to set up biometric authentication or OTP. They complete enrollment within the app without external redirects.
+
+**Security-conscious SaaS**: A password manager app requires all users to enroll in at least one additional factor as part of account setup.
+
+**Admin panels**: Team leads can manage their authenticators (add backup codes, set up new phones) directly from their admin settings.
+
+**Health and fitness apps**: Users enrolling in premium features are required to add a second factor for account security.
+
+**Native passkey onboarding**: During signup or first login on iOS/Android, users are prompted to create a passkey directly on their device.
+
+**B2B platforms**: Enterprise admins enroll in MFA during account creation and can manage factors for their team members.
+
+## How embedded MFA enrollment works
+
+<Steps>
+<Step title="App detects need for MFA enrollment">
+Your app logic triggers MFA enrollment—either required during signup, offered in settings, or triggered by a security policy.
+</Step>
+
+<Step title="App calls /mfa/associate endpoint">
+Your backend initiates MFA factor enrollment by calling the associate endpoint and specifying the factor type.
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/mfa/associate' \
+  --header 'Authorization: Bearer MFA_TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "authenticator_types": ["otp"],
+    "client_id": "YOUR_CLIENT_ID"
+  }'
+```
+
+This returns an `mfa_token` and enrollment details (e.g., QR code for OTP).
+</Step>
+
+<Step title="App displays enrollment UI">
+Your app shows the user the enrollment interface for the selected factor. Examples:
+- **OTP**: Display a QR code for scanning with Google Authenticator or Microsoft Authenticator
+- **SMS**: Show a phone number input and confirmation screen
+- **Email**: Show a confirmation of the user's registered email
+- **Push**: Instructions to approve the enrollment on a linked mobile device
+- **Biometric/Passkey**: Trigger platform-native enrollment (iOS/Android)
+</Step>
+
+<Step title="User completes factor enrollment">
+The user scans the QR code, enters their phone number, confirms email, or completes biometric setup.
+</Step>
+
+<Step title="App verifies enrollment">
+After the user provides their initial factor setup, your app sends verification to Auth0 to complete enrollment.
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/mfa/challenge-response' \
+  --header 'Authorization: Bearer MFA_TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "challenge_response": "123456"
+  }'
+```
+</Step>
+
+<Step title="Auth0 confirms enrollment">
+Auth0 confirms the factor is enrolled and returns updated factor information. The user can now use this factor for login or step-up authentication.
+</Step>
+
+<Step title="App provides recovery codes">
+Consider showing recovery codes or backup factors so users can still access their account if they lose their primary factor.
+</Step>
+</Steps>
+
+## Supported MFA factors
+
+Embedded enrollment supports these factor types:
+
+### OTP (One-Time Password)
+
+Users scan a QR code and enter 6-digit codes from their authenticator app. See [Enroll OTP Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-otp-authenticators) for details.
+
+### SMS
+
+Users provide a phone number and receive a verification code. See [Enroll SMS Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-sms-authenticators) for details.
+
+### Email
+
+Users confirm their registered email address for receiving OTP codes. See [Enroll Email Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-email-authenticators) for details.
+
+### Push Notifications
+
+Users approve/deny login attempts from a linked mobile device. See [Enroll Push Notification Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-push-notification-authenticators) for details.
+
+### Voice
+
+Users receive a voice call and press a key to verify. See [Enroll Voice Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-voice-authenticators) for details.
+
+### Native Passkeys (iOS/Android)
+
+For native mobile apps, users can enroll in platform-native passkeys using on-device authentication. See [Native Passkey Enrollment](/docs/authenticate/passwordless/implement-login/embedded-login/native-passkeys) for details.
+
+### Recovery Codes
+
+Users receive single-use backup codes for account recovery if they lose access to their primary factor. See [Enroll Recovery Codes](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api/enroll-recovery-code-authenticator) for details.
+
+## Obtaining an MFA token
+
+To call MFA endpoints, you need an `mfa_token`. This is obtained in two ways:
+
+### During login when MFA is required
+
+If a user logs in and MFA is required (either by policy or by step-up), Auth0 returns an `mfa_token` instead of access tokens. Use this token to let the user complete MFA or enroll in new factors before full authentication.
+
+### During enrollment flow
+
+You can initiate MFA enrollment while a user is already logged in by obtaining an `mfa_token` from the `/mfa/challenge-response` endpoint.
+
+## Managing enrolled factors
+
+The [Manage Authenticator Factors API](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api) lets you:
+
+- List a user's enrolled factors
+- Delete a factor
+- Verify a factor
+- Get factor details
+
+Users can also view and manage their factors from your settings page using this API.
+
+## Building a settings page
+
+A typical MFA settings page includes:
+
+1. **List of enrolled factors**: Display each factor (e.g., "Google Authenticator (Backup Factor)")
+2. **Add new factor button**: Let users enroll in additional factors
+3. **Delete factor**: Remove a factor with confirmation
+4. **Recovery codes**: Show or regenerate recovery codes
+5. **Verify factor**: Let users confirm a factor works before relying on it
+
+## Best practices
+
+**Make enrollment easy**: Minimize friction. Use QR code scanning instead of manual entry for OTP enrollment.
+
+**Provide clear instructions**: Show step-by-step instructions for each factor type. Include screenshots or videos for complex factors.
+
+**Offer choice**: Let users choose their preferred factor. Not everyone has a smartphone for SMS; offer both SMS and email options.
+
+**Require backup factors**: Encourage users to enroll in at least two factors so they can recover their account if they lose one.
+
+**Store recovery codes securely**: Show recovery codes at enrollment time and let users save them (download, print, screenshot). Make it clear these should be stored somewhere safe.
+
+**Don't require MFA immediately**: If MFA is optional, consider nudging users at key points (after their first transaction, when accessing sensitive data) rather than mandating it at signup.
+
+**Test factor verification**: Have users verify a factor works before marking it as enrolled. Send a test SMS or display a test OTP prompt.
+
+**Log enrollments**: Track when factors are enrolled or removed for audit and support purposes.
+
+## API reference
+
+- [Manage Authenticator Factors API](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api) — Complete API reference
+- [MFA for Embedded Flows](/docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa) — MFA flow implementation
+- [Enroll Authenticators](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api) — Individual factor enrollment endpoints
+
+## Next steps
+
+- [Manage Authenticator Factors](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api) — Implement the full MFA management API
+- [MFA for Embedded Flows](/docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa) — Complete MFA flow walkthrough
+- [Native Passkey Enrollment](/docs/authenticate/passwordless/implement-login/embedded-login/native-passkeys) — Platform-native enrollment on iOS/Android
+- [Step-up Authentication](/docs/authenticate/login/embedded-login/use-cases/step-up) — Trigger MFA challenges for sensitive operations

@@ -1,0 +1,190 @@
+---
+title: "Step-up Authentication"
+description: "Re-verify user identity before allowing access to sensitive operations using embedded step-up flows."
+---
+
+## What is step-up authentication?
+
+Step-up authentication is a security pattern where users must re-authenticate or complete an additional verification (usually MFA) before accessing sensitive operations or elevated privileges. The user remains logged in to your application but must provide additional proof of identity for specific high-risk actions.
+
+This adds a security layer without requiring full re-authentication across your entire app. For example, a user can be logged into a banking app, but must complete biometric authentication or enter an OTP before making a wire transfer.
+
+## When to use step-up authentication
+
+Use step-up authentication when:
+
+- **High-risk transactions**: Before wire transfers, large purchases, or fund movements.
+- **Admin escalation**: Before granting temporary admin access or making policy changes.
+- **Account modifications**: Before changing email, password, payment method, or security settings.
+- **Data access**: Before viewing sensitive information like tax documents, health records, or financial statements.
+- **Compliance requirements**: When regulations require re-verification before sensitive actions (e.g., PCI DSS, HIPAA, GDPR).
+- **Level of Assurance (LoA)**: When you need to enforce stricter authentication levels (LoA1 for regular login, LoA2 for sensitive operations).
+
+## Real-world scenarios
+
+**Banking apps**: A user is logged in with basic authentication. Before approving a wire transfer, the app requires biometric authentication or an OTP.
+
+**Admin dashboards**: An admin is logged in but must re-authenticate before changing organization-wide security policies or deleting resources.
+
+**E-commerce**: Before allowing a customer to change their payment method or view past purchase data, require an additional verification.
+
+**Financial platforms**: Before processing a large trade or withdrawal, require the user to confirm via a second factor.
+
+**Identity platforms**: Before users can change their email address, password, or linked identities, require step-up authentication.
+
+**Team collaboration tools**: Before accessing shared sensitive documents or granting new permissions, require step-up for audit compliance.
+
+## How step-up works in embedded flows
+
+<Steps>
+<Step title="User requests sensitive action">
+Your app detects that the user is performing a high-risk action (e.g., changing account settings or approving a transaction).
+</Step>
+
+<Step title="App calls challenge endpoint with mfa_required">
+Your backend sends a request to Auth0's MFA challenge endpoint, instructing it to require MFA for this user.
+
+```bash
+# This endpoint prepares the MFA challenge
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "audience": "YOUR_API_IDENTIFIER",
+    "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+    "subject_token": "CURRENT_ACCESS_TOKEN",
+    "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
+    "acr_values": "urn:mace:incommon:iap:silver"
+  }'
+```
+
+This returns an `mfa_required` response if the user has not recently completed MFA.
+</Step>
+
+<Step title="Auth0 returns mfa_required with challenge token">
+If MFA is required, Auth0 responds with:
+- `mfa_required: true`
+- `challenge_token` — a temporary token for completing the MFA flow
+- `mfa_token` — used to complete the MFA challenge
+
+```json
+{
+  "error": "mfa_required",
+  "error_description": "Multifactor authentication required",
+  "mfa_token": "Fe26...Ha",
+  "challenges": [
+    {
+      "challenge_type": "otp",
+      "name": "Google Authenticator"
+    },
+    {
+      "challenge_type": "sms",
+      "name": "+1***5555"
+    }
+  ]
+}
+```
+</Step>
+
+<Step title="App displays MFA challenge UI">
+Your app shows the user which factors are available (OTP, SMS, biometric, push notification) and prompts them to complete one.
+</Step>
+
+<Step title="App submits MFA response">
+After the user provides their MFA proof (e.g., OTP code, biometric scan), your app sends it to the `/oauth/token` endpoint with the mfa_token.
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "audience": "YOUR_API_IDENTIFIER",
+    "grant_type": "http://auth0.com/oauth/grant-type/mfa-otp",
+    "mfa_token": "Fe26...Ha",
+    "otp": "123456"
+  }'
+```
+</Step>
+
+<Step title="Auth0 returns new tokens">
+Upon successful MFA verification, Auth0 returns new access and ID tokens with a higher Level of Assurance.
+</Step>
+
+<Step title="App proceeds with sensitive operation">
+Your app uses the new tokens to authorize the sensitive operation and proceed with the transaction.
+</Step>
+</Steps>
+
+## Triggering step-up with Actions
+
+You can use [Actions](/docs/customize/actions) to enforce step-up authentication based on business logic:
+
+- Trigger MFA challenges based on transaction amount, IP location, or other risk signals.
+- Add custom claims to tokens to indicate which security level has been verified.
+- Log step-up events for audit and compliance.
+
+See [Step-up Authentication](/docs/secure/multi-factor-authentication/step-up-authentication) for detailed guidance on configuring step-up policies.
+
+## Controlling step-up parameters
+
+### ACR values
+
+Use `acr_values` (Authentication Context Class Reference) to request specific authentication levels:
+
+- `urn:mace:incommon:iap:bronze` — Basic authentication (no MFA required)
+- `urn:mace:incommon:iap:silver` — Medium security (MFA required)
+- `urn:mace:incommon:iap:gold` — High security (stronger MFA required)
+
+### Client IP hints
+
+Provide `auth0-forwarded-for` headers to give Auth0 context about the request origin, enabling risk-based decisions:
+
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'auth0-forwarded-for: 203.0.113.195' \
+  --data '...'
+```
+
+## Managing session freshness
+
+Step-up authentication works best when combined with refresh token management:
+
+- Use short-lived access tokens (5-15 minutes) for regular operations.
+- Use refresh tokens to obtain new access tokens without re-authenticating.
+- When a sensitive operation is requested, check token age: if the token is older than a threshold (e.g., 15 minutes), require step-up authentication.
+
+See [Refresh Tokens](/docs/secure/tokens/refresh-tokens) for implementation details.
+
+## Supported MFA factors for step-up
+
+Embedded step-up flows support:
+
+- **OTP (Time-based One-Time Password)**: Google Authenticator, Microsoft Authenticator
+- **SMS/Voice**: One-time codes sent via text or voice call
+- **Email**: OTP delivered via email
+- **Push notifications**: Approve/deny on a mobile device
+- **Biometric**: Native fingerprint or face recognition on mobile devices
+- **Recovery codes**: Fallback codes saved during factor enrollment
+
+See [MFA for Embedded Flows](/docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa) for implementation details on each factor type.
+
+## Best practices
+
+**Fail gracefully**: If the user cannot complete MFA (e.g., lost their phone), provide fallback options (security questions, recovery codes, support contact).
+
+**Log and monitor**: Log all step-up requests and MFA challenges for audit and fraud detection.
+
+**Set clear expectations**: Inform users why step-up is required. "We're asking you to verify your identity before processing this wire transfer."
+
+**Use appropriate factors**: Match the factor to the risk level. SMS might be sufficient for password changes; biometric might be required for large transactions.
+
+**Cache verification appropriately**: Don't require step-up for every single action. Consider timeouts: if the user completed MFA 5 minutes ago, maybe they don't need to do it again immediately for another action.
+
+## Next steps
+
+- [MFA for Embedded Flows](/docs/secure/multi-factor-authentication/authenticate-using-ropg-flow-with-mfa) — Detailed implementation guide
+- [Step-up Authentication](/docs/secure/multi-factor-authentication/step-up-authentication) — Conceptual guide and architecture patterns
+- [Manage Authenticator Factors](/docs/secure/multi-factor-authentication/manage-mfa-auth0-apis/manage-authenticator-factors-mfa-api) — Let users manage their enrolled factors
+- [Token Binding with DPoP](/docs/secure/tokens/access-tokens/token-binding/demonstrate-proof-of-possession) — Bind tokens to devices for additional security
