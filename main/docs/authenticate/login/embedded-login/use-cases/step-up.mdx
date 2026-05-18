@@ -42,24 +42,69 @@ Your app detects that the user is performing a high-risk action (e.g., changing 
 </Step>
 
 <Step title="App calls challenge endpoint with mfa_required">
-Your backend sends a request to Auth0's MFA challenge endpoint, instructing it to require MFA for this user.
+Your backend sends a request to Auth0 using any embedded authentication grant type. Auth0 will return an `mfa_required` response if MFA policies require step-up authentication.
 
+<Tabs>
+<Tab title="Refresh Token (most common for step-up)">
+When the user is already logged in and you want to step-up using their refresh token:
 ```bash
-# This endpoint prepares the MFA challenge
 curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
   --header 'Content-Type: application/json' \
   --data '{
     "client_id": "YOUR_CLIENT_ID",
     "client_secret": "YOUR_CLIENT_SECRET",
-    "audience": "YOUR_API_IDENTIFIER",
-    "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-    "subject_token": "CURRENT_ACCESS_TOKEN",
-    "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
-    "acr_values": "urn:mace:incommon:iap:silver"
+    "grant_type": "refresh_token",
+    "refresh_token": "CURRENT_REFRESH_TOKEN"
   }'
 ```
+When MFA is required (e.g., due to an Action or ACR policy), this returns an `mfa_required` error with an `mfa_token`.
+</Tab>
 
-This returns an `mfa_required` response if the user has not recently completed MFA.
+<Tab title="Resource Owner Password">
+Re-authenticate with credentials to trigger MFA:
+```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode 'username=user@example.com' \
+  --data-urlencode 'password=SecurePassword123!' \
+  --data-urlencode 'client_id=YOUR_CLIENT_ID' \
+  --data-urlencode 'client_secret=YOUR_CLIENT_SECRET' \
+  --data-urlencode 'audience=YOUR_API_IDENTIFIER' \
+  --data-urlencode 'scope=openid profile email'
+```
+</Tab>
+
+<Tab title="Passwordless (OTP)">
+Re-verify via passwordless OTP to trigger MFA:
+```bash
+# Send OTP
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/passwordless/start' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "connection": "email",
+    "send": "code",
+    "email": "user@example.com"
+  }'
+
+# Exchange OTP — returns mfa_required if MFA policy applies
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
+    "username": "user@example.com",
+    "otp": "123456",
+    "realm": "email",
+    "audience": "YOUR_API_IDENTIFIER",
+    "scope": "openid profile email"
+  }'
+```
+</Tab>
+</Tabs>
 </Step>
 
 <Step title="Auth0 returns mfa_required with challenge token">
@@ -154,6 +199,7 @@ Step-up authentication works best when combined with refresh token management:
 - Use short-lived access tokens (5-15 minutes) for regular operations.
 - Use refresh tokens to obtain new access tokens without re-authenticating.
 - When a sensitive operation is requested, check token age: if the token is older than a threshold (e.g., 15 minutes), require step-up authentication.
+- If your app calls multiple APIs, use a [Multi-Resource Refresh Token (MRRT)](/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token) to obtain access tokens for different audiences from a single refresh token. After step-up completes, the MRRT can issue elevated tokens for any of your APIs without requiring separate authentication flows.
 
 See [Refresh Tokens](/docs/secure/tokens/refresh-tokens) for implementation details.
 

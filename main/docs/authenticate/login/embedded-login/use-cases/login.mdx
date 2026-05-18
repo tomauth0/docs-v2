@@ -41,24 +41,107 @@ Your app displays a login form or passkey selector within your native UI.
 </Step>
 
 <Step title="App collects credentials">
-Gather the user's credentials (username/password, email/OTP, SMS code, or passkey assertion) directly in your app.
+Gather the user's credentials directly in your app. What you collect depends on the grant type:
+- **Resource Owner Password**: username and password
+- **Passwordless**: email or phone number
+- **Native Passkeys**: passkey assertion from the device
+- **Native Social Login**: platform-native token from Google, Apple, or Facebook sign-in
 </Step>
 
 <Step title="App calls /oauth/token">
 Your backend or frontend sends the credentials to Auth0's `/oauth/token` endpoint with the appropriate grant type.
 
+<Tabs>
+<Tab title="Resource Owner Password">
 ```bash
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode 'username=user@example.com' \
+  --data-urlencode 'password=SecurePassword123!' \
+  --data-urlencode 'client_id=YOUR_CLIENT_ID' \
+  --data-urlencode 'client_secret=YOUR_CLIENT_SECRET' \
+  --data-urlencode 'audience=YOUR_API_IDENTIFIER' \
+  --data-urlencode 'scope=openid profile email'
+```
+</Tab>
+
+<Tab title="Passwordless (Email/SMS OTP)">
+```bash
+# Step 1: Send OTP to user
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/passwordless/start' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "connection": "email",
+    "send": "code",
+    "email": "user@example.com"
+  }'
+
+# Step 2: Exchange OTP for tokens
 curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
   --header 'Content-Type: application/json' \
   --data '{
     "client_id": "YOUR_CLIENT_ID",
     "client_secret": "YOUR_CLIENT_SECRET",
-    "audience": "YOUR_API_IDENTIFIER",
-    "grant_type": "http://auth0.com/oauth/grant-type/passwordless-otp",
+    "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
     "username": "user@example.com",
-    "otp": "123456"
+    "otp": "123456",
+    "realm": "email",
+    "audience": "YOUR_API_IDENTIFIER",
+    "scope": "openid profile email"
   }'
 ```
+</Tab>
+
+<Tab title="Native Passkeys">
+```bash
+# Step 1: Request passkey challenge
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/passkey/challenge' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID"
+  }'
+
+# Step 2: Exchange passkey assertion for tokens
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "grant_type": "urn:okta:params:oauth:grant-type:webauthn",
+    "client_id": "YOUR_CLIENT_ID",
+    "auth_session": "<session_id_from_challenge>",
+    "authn_response": "<authenticator_assertion_response>",
+    "audience": "YOUR_API_IDENTIFIER",
+    "scope": "openid profile email"
+  }'
+```
+</Tab>
+
+<Tab title="Native Social Login">
+```bash
+# User authenticates with platform-native social sign-in
+# (Google Sign In, Sign In with Apple, Facebook Login)
+# Your app receives an id_token or authorization code from the provider
+
+# Exchange the provider token for Auth0 tokens
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+    "client_id": "YOUR_CLIENT_ID",
+    "subject_token": "<id_token_or_auth_code_from_provider>",
+    "subject_token_type": "http://auth0.com/oauth/token-type/apple-authz-code",
+    "audience": "YOUR_API_IDENTIFIER",
+    "scope": "openid profile email"
+  }'
+```
+
+<Note>
+The `subject_token_type` varies by provider. Use `http://auth0.com/oauth/token-type/apple-authz-code` for Apple or the appropriate token type for Google and Facebook.
+</Note>
+</Tab>
+</Tabs>
 </Step>
 
 <Step title="Auth0 validates and returns tokens">
@@ -94,6 +177,14 @@ For iOS and Android apps, you can use platform-native passkey APIs for frictionl
 
 - [Native Passkey Enrollment](/docs/authenticate/passwordless/implement-login/embedded-login/native-passkeys) — on-device passkey setup for iOS/Android
 
+### Native Social Login
+
+For native mobile apps, let users authenticate with platform-native social sign-in (Google, Apple, Facebook) without opening a browser. Your app uses the platform SDK to get a token from the social provider, then exchanges it with Auth0 via token exchange:
+
+- [Add Sign In with Google to Native Android Apps](/docs/authenticate/identity-providers/social-identity-providers/google-native)
+- [Add Sign In with Apple to Native iOS Apps](/docs/authenticate/identity-providers/social-identity-providers/apple-native)
+- [Add Facebook Login to Native Apps](/docs/authenticate/identity-providers/social-identity-providers/facebook-native)
+
 ### Lock SDK & Auth0.js
 
 Pre-built UI components that embed login directly in your web app:
@@ -115,7 +206,11 @@ For native mobile and desktop applications, consider implementing [Demonstrating
 
 ### Session management with refresh tokens
 
-Use refresh tokens as lightweight session artifacts to avoid full re-authentication during step-up flows or when tokens expire. See [Refresh Tokens](/docs/secure/tokens/refresh-tokens) for details.
+Use refresh tokens as lightweight session artifacts to avoid full re-authentication during step-up flows or when tokens expire.
+
+For applications that call multiple APIs, use a [Multi-Resource Refresh Token (MRRT)](/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token) to obtain access tokens for different API audiences from a single refresh token. This eliminates the need for separate authentication flows per API — your app authenticates once and uses the MRRT to get scoped access tokens for each resource as needed.
+
+See [Refresh Tokens](/docs/secure/tokens/refresh-tokens) for details.
 
 ## Next steps
 

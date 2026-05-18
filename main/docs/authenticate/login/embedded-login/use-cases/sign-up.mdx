@@ -70,19 +70,50 @@ Auth0 creates the user account, validates the email (if configured), and execute
 <Step title="App authenticates or redirects to login">
 After signup, you can optionally authenticate the user immediately using their credentials, or redirect them to verify their email before login.
 
+<Tabs>
+<Tab title="Database (Password)">
 ```bash
-# Optional: authenticate immediately after signup
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode 'username=user@example.com' \
+  --data-urlencode 'password=SecurePassword123!' \
+  --data-urlencode 'client_id=YOUR_CLIENT_ID' \
+  --data-urlencode 'client_secret=YOUR_CLIENT_SECRET' \
+  --data-urlencode 'audience=YOUR_API_IDENTIFIER' \
+  --data-urlencode 'scope=openid profile email'
+```
+</Tab>
+
+<Tab title="Passwordless (Email OTP)">
+```bash
+# Send verification OTP
+curl --request POST 'https://YOUR_AUTH0_DOMAIN/passwordless/start' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "connection": "email",
+    "send": "code",
+    "email": "user@example.com"
+  }'
+
+# Exchange OTP for tokens
 curl --request POST 'https://YOUR_AUTH0_DOMAIN/oauth/token' \
   --header 'Content-Type: application/json' \
   --data '{
     "client_id": "YOUR_CLIENT_ID",
     "client_secret": "YOUR_CLIENT_SECRET",
-    "audience": "YOUR_API_IDENTIFIER",
-    "grant_type": "http://auth0.com/oauth/grant-type/passwordless-otp",
+    "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
     "username": "user@example.com",
-    "password": "SecurePassword123!"
+    "otp": "123456",
+    "realm": "email",
+    "audience": "YOUR_API_IDENTIFIER",
+    "scope": "openid profile email"
   }'
 ```
+</Tab>
+</Tabs>
 </Step>
 
 <Step title="Your app continues onboarding">

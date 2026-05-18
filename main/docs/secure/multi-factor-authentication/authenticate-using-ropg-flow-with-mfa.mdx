@@ -1,20 +1,18 @@
 ---
-description: Learn how to authenticate users using the Resource Owner Password
-  Flow with MFA.
+description: Learn how to authenticate users with MFA in embedded flows using Auth0's MFA API.
 'og:image': https://cdn2.auth0.com/docs/1.14553.0/img/share-image.png
-'og:title': Authenticate Using the Resource Owner Password Flow with MFA
+'og:title': MFA for Embedded Flows
 'og:url': https://auth0.com/docs/
 permalink: authenticate-using-ropg-flow-with-mfa
-title: Authenticate Using the Resource Owner Password Flow with MFA
-'twitter:description': Learn how to authenticate users using the Resource Owner Password
-  Flow with MFA.
-'twitter:title': Authenticate Using the Resource Owner Password Flow with MFA
+title: MFA for Embedded Flows
+'twitter:description': Learn how to authenticate users with MFA in embedded flows using Auth0's MFA API.
+'twitter:title': MFA for Embedded Flows
 ---
 import {AuthCodeBlock} from "/snippets/AuthCodeBlock.jsx";
 
 import {AuthCodeGroup} from "/snippets/AuthCodeGroup.jsx";
 
-You can use the [Auth0 MFA API](https://auth0.com/docs/api/authentication#multi-factor-authentication) to complete the authentication flow using the [Resource Owner Password Flow](/docs/get-started/authentication-and-authorization-flow/resource-owner-password-flow) (sometimes called <Tooltip tip="Resource Owner: Entity (such as a user or application) capable of granting access to a protected resource." cta="View Glossary" href="/docs/glossary?term=Resource+Owner">Resource Owner</Tooltip> Password Grant or ROPG) when <Tooltip tip="Resource Owner: Entity (such as a user or application) capable of granting access to a protected resource." cta="View Glossary" href="/docs/glossary?term=MFA">MFA</Tooltip> is enabled.
+You can use the [Auth0 MFA API](https://auth0.com/docs/api/authentication#multi-factor-authentication) to handle <Tooltip tip="Multi-factor authentication (MFA): User authentication process that uses a factor in addition to username and password such as a code via SMS." cta="View Glossary" href="/docs/glossary?term=MFA">MFA</Tooltip> challenges in any embedded authentication flow. When MFA is enabled, most embedded grant types—including the [Resource Owner Password Flow](/docs/get-started/authentication-and-authorization-flow/resource-owner-password-flow) (ROPG), refresh token grants, and passwordless flows—return an `mfa_required` response with an `mfa_token` that you use to enroll or challenge users with MFA factors.
 
 ## Prerequisites
 
@@ -22,7 +20,7 @@ Before you can use the MFA APIs, you'll need to enable the MFA grant type for yo
 
 ## Authenticate user
 
-When you use the Resource Owner Password Flow to authenticate, you call the `/oauth/token` endpoint with the user's username and password.
+When you initiate an embedded authentication flow (e.g., Resource Owner Password Flow with username and password), you call the `/oauth/token` endpoint. The example below shows ROPG, which is the most common embedded flow, but the same `mfa_required` response applies to refresh token grants, passwordless flows, and other embedded authentication methods.
 
 <AuthCodeGroup>
 ```bash cURL
@@ -487,7 +485,7 @@ Customizable MFA with the Resource Owner Password Grant, Embedded, or Refresh To
 
 Customize your MFA flows with the MFA API. With the MFA API, you can allow your users to enroll and challenge with a specific choice of factors your application supports.
 
-When MFA is enabled with the Resource Owner Password Flow to authenticate, call to the `/oauth/token endpoint` to request an access token. The authorization server returns an `mfa_required` error which provides:
+When MFA is enabled with embedded authentication flows, the `/oauth/token endpoint` returns an `mfa_required` error which provides:
 
 * The `mfa_token` you need to call the MFA API for enrollment and challenges.
 * The `mfa_requirements` parameter, which provides the type of factor your application supports for challenges.
